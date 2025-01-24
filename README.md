@@ -148,9 +148,9 @@ MIT License
 
 ## 联系方式
 
-- 作者：[Your Name]
-- Email：[Your Email]
-- GitHub：[Your GitHub Profile]
+- 作者：[baobu]
+- Email：[btr17352034242@gmail.com]
+- GitHub：[[Your GitHub Profile](https://github.com/17352034242)]
 
 ## 更新日志
 
