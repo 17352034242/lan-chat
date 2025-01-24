@@ -1,0 +1,2180 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>局域网聊天系统</title>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Noto Sans SC', sans-serif;
+            background-color: #F6F7F9;
+            color: #333;
+            display: flex;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+        }
+
+        .sidebar {
+            width: 200px;
+            min-width: 200px;
+            background-color: #FFFFFF;
+            border-right: 1px solid #E6E8EB;
+            display: flex;
+            flex-direction: column;
+            padding: 16px 0;
+            justify-content: space-between;
+            height: 100vh;
+            box-sizing: border-box;
+        }
+
+        .sidebar .profile {
+            padding: 0 24px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .profile:hover {
+            background-color: #F2F3F6;
+        }
+
+        .profile-circle {
+            width: 48px;
+            height: 48px;
+            background-color: #007BFF;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 12px;
+            font-size: 18px;
+            color: #FFFFFF;
+        }
+
+        .profile-name {
+            font-size: 16px;
+            font-weight: 700;
+            color: #333;
+        }
+
+        .nav-links ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .nav-links li {
+            margin: 4px 0;
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            border-radius: 4px;
+            margin: 0 12px;
+            font-size: 15px;
+            position: relative;
+        }
+
+        .nav-links li .unread-badge {
+            position: absolute;
+            right: 12px;
+            background: #ff4444;
+            color: white;
+            border-radius: 10px;
+            padding: 2px 6px;
+            font-size: 12px;
+            min-width: 20px;
+            text-align: center;
+        }
+
+        .nav-links li:hover {
+            background-color: #F2F3F6;
+        }
+
+        .nav-links li.selected {
+            background-color: #E3F2FD;
+            color: #007BFF;
+            font-weight: 700;
+        }
+
+        .nav-links .friend-item, .nav-links .group-item {
+            padding-left: 36px;
+            position: relative;
+        }
+
+        .nav-links .friend-item::before {
+            content: '#';
+            position: absolute;
+            left: 24px;
+            color: #666;
+        }
+
+        .nav-links .group-item::before {
+            content: '@';
+            position: absolute;
+            left: 24px;
+            color: #666;
+        }
+
+        .friend-request-dialog {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 24px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 1001;
+            display: none;
+            width: 320px;
+        }
+
+        .friend-request-dialog h3 {
+            margin: 0 0 16px 0;
+        }
+
+        .friend-request-dialog input {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 16px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .friend-request-dialog .buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .friend-request-dialog button {
+            flex: 1;
+            padding: 8px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .friend-request-dialog .send {
+            background: #007BFF;
+            color: white;
+        }
+
+        .friend-request-dialog .cancel {
+            background: #6c757d;
+            color: white;
+        }
+
+        .create-group-dialog {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 24px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 1001;
+            display: none;
+            width: 320px;
+        }
+
+        .create-group-dialog h3 {
+            margin: 0 0 16px 0;
+        }
+
+        .create-group-dialog input {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 16px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .create-group-dialog .member-list {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 16px;
+        }
+
+        .create-group-dialog .member-item {
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .create-group-dialog .member-item:last-child {
+            border-bottom: none;
+        }
+
+        .create-group-dialog .member-item span {
+            flex-grow: 1;
+            text-align: left;
+            font-size: 14px;
+        }
+
+        .create-group-dialog .member-item input[type="checkbox"] {
+            margin: 0;
+            width: 16px;
+            height: 16px;
+        }
+
+        .create-group-dialog .buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .create-group-dialog button {
+            flex: 1;
+            padding: 8px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .create-group-dialog .create {
+            background: #007BFF;
+            color: white;
+        }
+
+        .create-group-dialog .cancel {
+            background: #6c757d;
+            color: white;
+        }
+
+        .content {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: #fff;
+        }
+
+        .main-area {
+            flex-grow: 1;
+            display: flex;
+            overflow: hidden;
+        }
+
+        .chat-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+
+        .screen-share-area,
+        .screen-share-header,
+        .screen-share-content,
+        #screenShareVideo,
+        .screen-share-controls,
+        .screen-share-container {
+            display: none;
+        }
+
+        .header {
+            height: 64px;
+            background-color: #FFFFFF;
+            border-bottom: 1px solid #E6E8EB;
+            padding: 16px 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 16px;
+            font-weight: 700;
+            position: relative;
+        }
+
+        .online-users {
+            position: relative;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .online-count {
+            font-size: 14px;
+            color: #666;
+            padding: 8px 12px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #f5f5f5;
+        }
+
+        .online-count:hover {
+            background: #eee;
+        }
+
+        .users-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: white;
+            border: 1px solid #E6E8EB;
+            border-radius: 8px;
+            padding: 8px 0;
+            margin-top: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            display: none;
+            min-width: 200px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .user-item {
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .user-item:hover {
+            background: #f5f5f5;
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #007BFF;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .user-name {
+            font-size: 14px;
+            color: #333;
+        }
+
+        .main-content {
+            flex-grow: 1;
+            padding: 48px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .main-content h1 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 700;
+            color: #000;
+        }
+
+        .main-content p {
+            margin: 8px 0 24px;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .main-content p a {
+            text-decoration: none;
+            color: #007BFF;
+        }
+
+        .main-content p a:hover {
+            text-decoration: underline;
+        }
+
+        .footer {
+            height: 64px;
+            background-color: #F2F3F6;
+            padding: 16px 32px;
+            display: flex;
+            align-items: center;
+            color: #666;
+            gap: 8px;
+        }
+
+        .footer .emoji {
+            font-size: 20px;
+            color: #333;
+            cursor: pointer;
+        }
+
+        .footer input {
+            flex-grow: 1;
+            padding: 8px 12px;
+            border: 1px solid #E6E8EB;
+            border-radius: 4px;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .footer input::placeholder {
+            color: #999;
+        }
+
+        .footer .send-btn {
+            background-color: #007BFF;
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .footer .send-btn:hover {
+            background-color: #0056b3;
+        }
+
+        /* 新增样式 */
+        .login-container {
+            position: fixed;
+            top: 0;
+            left: 200px;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .login-box {
+            background: white;
+            padding: 32px;
+            border-radius: 8px;
+            width: 320px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .login-box h2 {
+            margin: 0 0 24px 0;
+            text-align: center;
+            color: #333;
+        }
+
+        .login-box input {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            border: 1px solid #E6E8EB;
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+
+        .login-box button {
+            width: 100%;
+            padding: 12px;
+            background: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 16px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .login-box button:hover {
+            background: #0056b3;
+        }
+
+        .message {
+            margin: 8px 0;
+            padding: 12px;
+            border-radius: 8px;
+            max-width: 80%;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .message-container {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 20px 40px;
+            display: flex;
+            flex-direction: column;
+            background-color: #fff;
+        }
+
+        .message-header {
+            font-size: 13px;
+            margin-bottom: 6px;
+            display: flex;
+            justify-content: space-between;
+            color: #666;
+            padding: 0 4px;
+        }
+
+        .message-content {
+            word-break: break-word;
+            font-size: 15px;
+            line-height: 1.6;
+            padding: 0 4px;
+        }
+
+        .message-content img {
+            max-width: 300px;
+            max-height: 200px;
+            border-radius: 4px;
+            margin-top: 8px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .message-content img:hover {
+            transform: scale(1.02);
+        }
+
+        .message-content .file-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px;
+            background: rgba(0,0,0,0.05);
+            border-radius: 4px;
+            margin-top: 4px;
+        }
+
+        .message-content .file-info i {
+            font-size: 20px;
+            color: #666;
+        }
+
+        .message.sent {
+            background: #E3F2FD;
+            color: #333;
+            margin-left: auto;
+            margin-right: 0;
+            border-right: 3px solid #007BFF;
+        }
+
+        .message.received {
+            background: #F5F5F5;
+            margin-right: auto;
+            margin-left: 0;
+            border-left: 3px solid #666;
+            color: #333;
+        }
+
+        .file-upload {
+            display: none;
+        }
+
+        .file-upload-label {
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 4px;
+        }
+
+        .file-upload-label:hover {
+            background: #F2F3F6;
+        }
+
+        /* 添加表情选择器样式 */
+        .emoji-picker {
+            position: absolute;
+            bottom: 80px;
+            left: 32px;
+            background: white;
+            border: 1px solid #E6E8EB;
+            border-radius: 8px;
+            padding: 8px;
+            display: none;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .emoji-picker span {
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+            text-align: center;
+        }
+
+        .emoji-picker span:hover {
+            background: #F2F3F6;
+        }
+
+        .sidebar .bottom-buttons {
+            border-top: 1px solid #E6E8EB;
+            padding: 8px 0;
+        }
+
+        .sidebar .bottom-buttons .btn {
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            color: #666;
+            font-size: 15px;
+            transition: background-color 0.2s;
+            position: relative;
+        }
+
+        .sidebar .bottom-buttons .btn .friend-request-count {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #ff4444;
+            color: white;
+            border-radius: 10px;
+            padding: 2px 6px;
+            font-size: 12px;
+            min-width: 20px;
+            text-align: center;
+        }
+
+        .friend-requests-list {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 16px;
+            border-top: 1px solid #E6E8EB;
+        }
+
+        .friend-request-item {
+            padding: 12px;
+            border-bottom: 1px solid #E6E8EB;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .friend-request-item .user-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .friend-request-item .user-avatar {
+            width: 32px;
+            height: 32px;
+        }
+
+        .friend-request-item .actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .friend-request-item .actions button {
+            padding: 4px 8px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .friend-request-item .actions .accept {
+            background: #28a745;
+            color: white;
+        }
+
+        .friend-request-item .actions .reject {
+            background: #dc3545;
+            color: white;
+        }
+
+        .image-preview {
+            margin-top: 8px;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #f5f5f5;
+        }
+
+        .image-preview .image-info {
+            padding: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+        }
+
+        .image-preview .image-info i {
+            color: #666;
+        }
+
+        .image-preview .image-info .file-size {
+            color: #666;
+            font-size: 12px;
+            margin-left: auto;
+        }
+
+        .image-preview img {
+            max-width: 300px;
+            max-height: 300px;
+            display: block;
+            margin: 0 auto;
+            border-radius: 0 0 8px 8px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .image-preview img:hover {
+            transform: scale(1.02);
+        }
+
+        .image-preview .error {
+            padding: 16px;
+            color: #dc3545;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <!-- 登录界面 -->
+    <div class="login-container" id="loginContainer">
+        <div class="login-box">
+            <h2>登录/注册</h2>
+            <input type="text" id="username" placeholder="用户名">
+            <input type="password" id="password" placeholder="密码">
+            <button id="loginBtn">登录</button>
+            <button id="registerBtn" style="background: #28a745;">注册</button>
+        </div>
+    </div>
+
+    <div class="sidebar">
+        <div>
+            <div class="profile" onclick="showProfileDialog()">
+                <span class="profile-circle" id="profileIcon">B</span>
+                <span class="profile-name" id="profileName">山东众智大数据</span>
+            </div>
+            <div class="nav-links">
+                <ul>
+                    <li class="selected">
+                        <i class="fas fa-home"></i>
+                        大家庭
+                    </li>
+                    <li onclick="showCreateGroupDialog()">
+                        <i class="fas fa-plus"></i>
+                        创建群组
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <div class="bottom-buttons">
+            <div class="btn" onclick="showAddFriendDialog()">
+                <i class="fas fa-user-plus"></i>
+                添加好友
+            </div>
+            <div class="btn" onclick="startScreenShare()">
+                <i class="fas fa-desktop"></i>
+                屏幕共享
+            </div>
+            <div class="btn" onclick="handleLogout()">
+                <i class="fas fa-sign-out-alt"></i>
+                退出登录
+            </div>
+        </div>
+    </div>
+    <div class="content">
+        <div class="header">
+            <div>大家庭</div>
+            <div class="online-users" onclick="toggleUsersDropdown()">
+                <div class="online-count">
+                    <i class="fas fa-users"></i>
+                    在线: <span id="userCount">0</span>
+                </div>
+                <div class="users-dropdown" id="usersDropdown"></div>
+            </div>
+        </div>
+        
+        <div class="main-area">
+            <div class="chat-area">
+                <div class="message-container" id="messageContainer"></div>
+                <div class="footer">
+                    <div class="emoji" onclick="toggleEmojiPicker()">😊</div>
+                    <div class="emoji-picker" id="emojiPicker">
+                        <span onclick="addEmoji('😊')">😊</span>
+                        <span onclick="addEmoji('😂')">😂</span>
+                        <span onclick="addEmoji('🤣')">🤣</span>
+                        <span onclick="addEmoji('😅')">😅</span>
+                        <span onclick="addEmoji('😆')">😆</span>
+                        <span onclick="addEmoji('😉')">😉</span>
+                        <span onclick="addEmoji('😋')">😋</span>
+                        <span onclick="addEmoji('😎')">😎</span>
+                        <span onclick="addEmoji('😍')">😍</span>
+                        <span onclick="addEmoji('🥰')">🥰</span>
+                        <span onclick="addEmoji('😘')">😘</span>
+                        <span onclick="addEmoji('🤗')">🤗</span>
+                        <span onclick="addEmoji('🤔')">🤔</span>
+                        <span onclick="addEmoji('🤨')">🤨</span>
+                        <span onclick="addEmoji('😐')">😐</span>
+                        <span onclick="addEmoji('😑')">😑</span>
+                        <span onclick="addEmoji('👍')">👍</span>
+                        <span onclick="addEmoji('👎')">👎</span>
+                        <span onclick="addEmoji('👌')">👌</span>
+                        <span onclick="addEmoji('✌️')">✌️</span>
+                        <span onclick="addEmoji('🤝')">🤝</span>
+                        <span onclick="addEmoji('👋')">👋</span>
+                        <span onclick="addEmoji('❤️')">❤️</span>
+                        <span onclick="addEmoji('💔')">💔</span>
+                    </div>
+                    <label class="file-upload-label">
+                        <i class="fas fa-paperclip"></i>
+                        <input type="file" class="file-upload" id="fileUpload" onchange="handleFileUpload(event)">
+                    </label>
+                    <input type="text" id="messageInput" placeholder="发送至 #大家庭" onkeypress="handleKeyPress(event)">
+                    <button class="send-btn" onclick="sendMessage()">发送</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let ws;
+        let currentUser;
+        let currentChat = null;
+        let friends = [];
+        let groups = [];
+        const serverUrl = `ws://${window.location.hostname}:6655`;
+
+        // WebRTC相关变量
+        let peerConnection = null;
+        let screenStream = null;
+
+        // 添加登录和注册按钮的事件监听器
+        document.getElementById('loginBtn').addEventListener('click', handleLogin);
+        document.getElementById('registerBtn').addEventListener('click', handleRegister);
+
+        // 检查是否已登录
+        function checkLoginStatus() {
+            const savedUser = localStorage.getItem('currentUser');
+            if (savedUser) {
+                currentUser = savedUser;
+                document.getElementById('loginContainer').style.display = 'none';
+                initWebSocket();
+                loadFriends();
+                loadGroups();
+            }
+        }
+
+        // 初始化WebSocket连接
+        function initWebSocket() {
+            ws = new WebSocket(serverUrl);
+            
+            ws.onopen = () => {
+                console.log('WebSocket连接已建立');
+                // 连接建立后发送auth消息
+                ws.send(JSON.stringify({
+                    type: 'auth',
+                    username: currentUser
+                }));
+            };
+
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                handleMessage(data);
+            };
+
+            ws.onclose = () => {
+                console.log('WebSocket连接已关闭');
+                setTimeout(initWebSocket, 3000); // 断线重连
+            };
+        }
+
+        // 处理登录
+        async function handleLogin() {
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value.trim();
+
+            if (!username || !password) {
+                alert('用户名和密码不能为空');
+                return;
+            }
+
+            try {
+                const response = await fetch(`http://${window.location.hostname}:6655/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ username, password }),
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    currentUser = data.username;
+                    localStorage.setItem('currentUser', currentUser);
+                    document.getElementById('loginContainer').style.display = 'none';
+                    initWebSocket();
+                    loadFriends();
+                    loadGroups();
+                } else {
+                    alert('登录失败，请检查用户名和密码');
+                }
+            } catch (error) {
+                console.error('登录错误:', error);
+                alert('登录失败，请稍后重试');
+            }
+        }
+
+        // 处理注册
+        async function handleRegister() {
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value.trim();
+
+            if (!username || !password) {
+                alert('用户名和密码不能为空');
+                return;
+            }
+
+            if (username.length < 3) {
+                alert('用户名至少需要3个字符');
+                return;
+            }
+
+            if (password.length < 6) {
+                alert('密码至少需要6个字符');
+                return;
+            }
+
+            try {
+                const response = await fetch(`http://${window.location.hostname}:6655/register`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ username, password }),
+                });
+
+                if (response.ok) {
+                    alert('注册成功，请登录');
+                    document.getElementById('username').value = username;
+                } else {
+                    const data = await response.json();
+                    alert(data.error || '注册失败，用户名可能已存在');
+                }
+            } catch (error) {
+                console.error('注册错误:', error);
+                alert('注册失败，请稍后重试');
+            }
+        }
+
+        // 处理注销
+        function handleLogout() {
+            localStorage.removeItem('currentUser');
+            currentUser = null;
+            if (ws) {
+                ws.close();
+            }
+            document.getElementById('loginContainer').style.display = 'flex';
+            document.getElementById('messageContainer').innerHTML = '';
+            friends = [];
+            groups = [];
+            currentChat = null;
+            updateNavLinks();
+        }
+
+        // 发送消息
+        function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            
+            if (message) {
+                const messageData = {
+                    type: 'message',
+                    content: message,
+                    sender: currentUser
+                };
+
+                if (currentChat) {
+                    if (currentChat.type === 'friend') {
+                        messageData.receiver = currentChat.id;
+                    } else if (currentChat.type === 'group') {
+                        messageData.group_id = currentChat.id;
+                    }
+                }
+
+                ws.send(JSON.stringify(messageData));
+                input.value = '';
+            }
+        }
+
+        // 获取文件图标
+        function getFileIcon(fileType, fileName) {
+            // 如果是图片类型，直接返回图片图标
+            if (fileType?.startsWith('image/')) return 'fa-image';
+            if (fileType?.startsWith('video/')) return 'fa-video';
+            if (fileType?.startsWith('audio/')) return 'fa-music';
+            
+            // 确保fileName存在且不为空
+            if (!fileName) return 'fa-file';
+            
+            try {
+                const ext = fileName.split('.').pop()?.toLowerCase() || '';
+                switch (ext) {
+                    case 'pdf': return 'fa-file-pdf';
+                    case 'doc':
+                    case 'docx': return 'fa-file-word';
+                    case 'xls':
+                    case 'xlsx': return 'fa-file-excel';
+                    case 'ppt':
+                    case 'pptx': return 'fa-file-powerpoint';
+                    case 'zip':
+                    case 'rar':
+                    case '7z': return 'fa-file-archive';
+                    case 'txt': return 'fa-file-alt';
+                    default: return 'fa-file';
+                }
+            } catch (error) {
+                console.error('获取文件图标错误:', error);
+                return 'fa-file'; // 返回默认图标
+            }
+        }
+
+        // 格式化文件大小
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // 处理文件上传
+        async function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            // 检查文件大小
+            if (file.size > 100 * 1024 * 1024) {
+                alert('文件大小不能超过100MB');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const response = await fetch(`http://${window.location.hostname}:6655/upload`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    const messageData = {
+                        type: 'file',
+                        filename: file.name,
+                        fileUrl: data.url,
+                        sender: currentUser,
+                        fileType: file.type,
+                        fileSize: file.size
+                    };
+
+                    // 添加接收者或群组ID
+                    if (currentChat) {
+                        if (currentChat.type === 'friend') {
+                            messageData.receiver = currentChat.id;
+                        } else if (currentChat.type === 'group') {
+                            messageData.group_id = currentChat.id;
+                        }
+                    }
+
+                    // 只发送消息，不立即显示
+                    ws.send(JSON.stringify(messageData));
+                }
+            } catch (error) {
+                console.error('文件上传错误:', error);
+                alert('文件上传失败，请重试');
+            }
+            
+            // 清除文件输入框的值，允许重复上传相同文件
+            event.target.value = '';
+        }
+
+        // 开始屏幕共享
+        async function startScreenShare() {
+            alert('屏幕共享功能正在开发中，敬请期待！');
+        }
+
+        // 停止屏幕共享
+        function stopScreenShare() {
+            if (screenStream) {
+                screenStream.getTracks().forEach(track => track.stop());
+                screenStream = null;
+            }
+            
+            if (peerConnection) {
+                peerConnection.close();
+                peerConnection = null;
+            }
+
+            const video = document.getElementById('screenShareVideo');
+            video.srcObject = null;
+            document.getElementById('screenShareArea').style.display = 'none';
+
+            // 发送停止共享消息
+            if (currentChat) {
+                ws.send(JSON.stringify({
+                    type: 'screen_share_stop',
+                    receiver: currentChat.type === 'friend' ? currentChat.id : null,
+                    group_id: currentChat.type === 'group' ? currentChat.id : null
+                }));
+            }
+        }
+
+        // 关闭屏幕共享区域
+        function closeScreenShare() {
+            stopScreenShare();
+            document.getElementById('screenShareArea').style.display = 'none';
+        }
+
+        // 处理收到的屏幕共享offer
+        async function handleScreenShareOffer(data) {
+            try {
+                document.getElementById('screenShareArea').style.display = 'flex';
+                
+                peerConnection = new RTCPeerConnection({
+                    iceServers: [
+                        { urls: 'stun:stun.l.google.com:19302' }
+                    ]
+                });
+
+                // 处理远程流
+                peerConnection.ontrack = event => {
+                    document.getElementById('screenShareVideo').srcObject = event.streams[0];
+                };
+
+                // 监听ICE候选
+                peerConnection.onicecandidate = event => {
+                    if (event.candidate) {
+                        ws.send(JSON.stringify({
+                            type: 'ice_candidate',
+                            candidate: event.candidate,
+                            receiver: data.sender,
+                            group_id: data.group_id
+                        }));
+                    }
+                };
+
+                // 设置远程描述
+                await peerConnection.setRemoteDescription(new RTCSessionDescription(data.offer));
+
+                // 创建应答
+                const answer = await peerConnection.createAnswer();
+                await peerConnection.setLocalDescription(answer);
+
+                // 发送应答
+                ws.send(JSON.stringify({
+                    type: 'screen_share_answer',
+                    answer: answer,
+                    receiver: data.sender,
+                    group_id: data.group_id
+                }));
+            } catch (error) {
+                console.error('处理屏幕共享offer错误:', error);
+            }
+        }
+
+        // 处理收到的屏幕共享answer
+        async function handleScreenShareAnswer(data) {
+            try {
+                await peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
+            } catch (error) {
+                console.error('处理屏幕共享answer错误:', error);
+            }
+        }
+
+        // 处理收到的ICE候选
+        async function handleIceCandidate(data) {
+            try {
+                if (peerConnection) {
+                    await peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
+                }
+            } catch (error) {
+                console.error('处理ICE候选错误:', error);
+            }
+        }
+
+        // 处理屏幕共享停止
+        function handleScreenShareStop() {
+            const video = document.getElementById('screenShareVideo');
+            video.srcObject = null;
+            document.getElementById('screenShareArea').style.display = 'none';
+            
+            if (peerConnection) {
+                peerConnection.close();
+                peerConnection = null;
+            }
+        }
+
+        // 在script开始处添加未读消息计数器对象
+        let unreadCounts = {
+            public: 0,  // 大家庭的未读消息
+            friends: {},  // 好友的未读消息 {username: count}
+            groups: {}  // 群组的未读消息 {groupId: count}
+        };
+
+        // 修改handleMessage函数中的消息处理部分
+        function handleMessage(data) {
+            const container = document.getElementById('messageContainer');
+
+            switch (data.type) {
+                case 'history':
+                    container.innerHTML = '';
+                    data.messages.forEach(msg => {
+                        if (msg && msg.sender) {
+                            appendMessage(msg);
+                        }
+                    });
+                    container.scrollTop = container.scrollHeight;
+                    break;
+
+                case 'users':
+                    updateOnlineUsers(data.users);
+                    break;
+
+                case 'friends':
+                    friends = data.friends;
+                    updateNavLinks();
+                    break;
+
+                case 'groups':
+                    groups = data.groups;
+                    updateNavLinks();
+                    break;
+
+                case 'friend_request':
+                    handleFriendRequest(data.from);
+                    break;
+
+                case 'friend_accepted':
+                    loadFriends();
+                    break;
+
+                case 'screen_share_offer':
+                    handleScreenShareOffer(data);
+                    break;
+
+                case 'screen_share_answer':
+                    handleScreenShareAnswer(data);
+                    break;
+
+                case 'ice_candidate':
+                    handleIceCandidate(data);
+                    break;
+
+                case 'screen_share_stop':
+                    handleScreenShareStop();
+                    break;
+
+                case 'message':
+                case 'file':
+                    // 检查消息是否属于当前聊天
+                    const shouldDisplay = 
+                        (!currentChat && !data.receiver && !data.group_id) ||
+                        (currentChat?.type === 'friend' && (
+                            (data.sender === currentChat.id && data.receiver === currentUser) ||
+                            (data.sender === currentUser && data.receiver === currentChat.id)
+                        )) ||
+                        (data.group_id && groups.some(group => group.id === data.group_id));
+
+                    // 更新未读消息计数
+                    if (data.sender !== currentUser) {  // 不计算自己发送的消息
+                        if (!data.receiver && !data.group_id) {
+                            // 公共消息
+                            if (!currentChat) {
+                                unreadCounts.public++;
+                            }
+                        } else if (data.receiver === currentUser) {
+                            // 私聊消息
+                            if (!currentChat || currentChat.type !== 'friend' || currentChat.id !== data.sender) {
+                                unreadCounts.friends[data.sender] = (unreadCounts.friends[data.sender] || 0) + 1;
+                            }
+                        } else if (data.group_id) {
+                            // 群组消息
+                            if (!currentChat || currentChat.type !== 'group' || currentChat.id !== data.group_id) {
+                                unreadCounts.groups[data.group_id] = (unreadCounts.groups[data.group_id] || 0) + 1;
+                            }
+                        }
+                    }
+
+                    if (shouldDisplay && data.sender) {
+                        appendMessage(data);
+                        if ((!data.group_id && !currentChat) || 
+                            (currentChat?.type === 'friend' && (data.sender === currentChat.id || data.receiver === currentChat.id)) ||
+                            (currentChat?.type === 'group' && data.group_id === currentChat.id)) {
+                            container.scrollTop = container.scrollHeight;
+                        }
+                    }
+
+                    // 更新导航栏显示未读消息数
+                    updateNavLinks();
+                    break;
+            }
+        }
+
+        // 添加消息到界面
+        function appendMessage(data) {
+            const container = document.getElementById('messageContainer');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${data.sender === currentUser ? 'sent' : 'received'}`;
+
+            const headerDiv = document.createElement('div');
+            headerDiv.className = 'message-header';
+            const time = new Date(data.created_at).toLocaleTimeString('zh-CN', { 
+                hour: '2-digit', 
+                minute: '2-digit' 
+            });
+            headerDiv.innerHTML = `
+                <span>${data.sender}</span>
+                <span>${time}</span>
+            `;
+
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+
+            switch (data.type) {
+                case 'message':
+                    contentDiv.textContent = data.content;
+                    break;
+                case 'file':
+                    const isImage = data.fileType?.startsWith('image/');
+                    if (isImage) {
+                        // 创建图片预览容器
+                        const imgContainer = document.createElement('div');
+                        imgContainer.className = 'image-preview';
+                        imgContainer.innerHTML = `
+                            <div class="image-info">
+                                <i class="fas fa-image"></i>
+                                <span>${data.filename || '图片'}</span>
+                                ${data.fileSize ? `<span class="file-size">${formatFileSize(data.fileSize)}</span>` : ''}
+                            </div>
+                            <img src="${data.fileUrl}" alt="${data.filename || '图片'}" 
+                                onclick="window.open('${data.fileUrl}', '_blank')"
+                                onload="this.style.display='block'"
+                                onerror="this.parentElement.innerHTML += '<div class=\'error\'>图片加载失败</div>'"
+                                style="display: none;">
+                        `;
+                        contentDiv.appendChild(imgContainer);
+                    } else {
+                        const icon = getFileIcon(data.fileType, data.filename);
+                        const fileSize = data.fileSize ? formatFileSize(data.fileSize) : '';
+                        const fileName = data.filename || '未知文件';
+                        contentDiv.innerHTML = `
+                            <div class="file-info">
+                                <i class="fas ${icon}"></i>
+                                <div style="flex-grow: 1;">
+                                    <div style="margin-bottom: 4px;">${fileName}</div>
+                                    ${fileSize ? `<div style="font-size: 12px; color: #666;">${fileSize}</div>` : ''}
+                                </div>
+                                <a href="${data.fileUrl}" download="${fileName}" class="send-btn" style="padding: 4px 8px;">
+                                    <i class="fas fa-download"></i>
+                                </a>
+                            </div>
+                        `;
+                    }
+                    break;
+            }
+
+            messageDiv.appendChild(headerDiv);
+            messageDiv.appendChild(contentDiv);
+            container.appendChild(messageDiv);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        // 更新在线用户列表
+        function updateOnlineUsers(users) {
+            const container = document.getElementById('usersDropdown');
+            const userCount = document.getElementById('userCount');
+            container.innerHTML = '';
+            
+            if (Array.isArray(users)) {
+                const validUsers = users.filter(user => user && user !== currentUser);
+                userCount.textContent = validUsers.length;
+                
+                validUsers.forEach(user => {
+                    const userItem = document.createElement('div');
+                    userItem.className = 'user-item';
+                    
+                    const avatar = document.createElement('div');
+                    avatar.className = 'user-avatar';
+                    avatar.textContent = user.charAt(0).toUpperCase();
+                    
+                    const userName = document.createElement('div');
+                    userName.className = 'user-name';
+                    userName.textContent = user;
+
+                    const addButton = document.createElement('button');
+                    addButton.className = 'send-btn';
+                    addButton.style.padding = '4px 8px';
+                    addButton.innerHTML = '<i class="fas fa-user-plus"></i>';
+                    addButton.onclick = (e) => {
+                        e.stopPropagation();
+                        sendFriendRequest(user);
+                    };
+                    
+                    userItem.appendChild(avatar);
+                    userItem.appendChild(userName);
+                    userItem.appendChild(addButton);
+                    container.appendChild(userItem);
+                });
+            }
+        }
+
+        // 在script部分添加新的变量和函数
+        let pendingFriendRequests = [];
+
+        // 修改handleFriendRequest函数
+        function handleFriendRequest(username) {
+            // 添加到待处理列表
+            if (!pendingFriendRequests.includes(username)) {
+                pendingFriendRequests.push(username);
+                updateFriendRequestCount();
+            }
+        }
+
+        // 添加更新好友请求数量的函数
+        function updateFriendRequestCount() {
+            const addFriendBtn = document.querySelector('.bottom-buttons .btn:first-child');
+            let badge = addFriendBtn.querySelector('.friend-request-count');
+            
+            if (pendingFriendRequests.length > 0) {
+                if (!badge) {
+                    badge = document.createElement('span');
+                    badge.className = 'friend-request-count';
+                    addFriendBtn.appendChild(badge);
+                }
+                badge.textContent = pendingFriendRequests.length;
+            } else if (badge) {
+                badge.remove();
+            }
+        }
+
+        // 修改showAddFriendDialog函数
+        async function showAddFriendDialog() {
+            try {
+                const response = await fetch(`http://${window.location.hostname}:6655/users`);
+                if (!response.ok) {
+                    throw new Error('获取用户列表失败');
+                }
+                const users = await response.json();
+                
+                const availableUsers = users
+                    .map(user => user.username)
+                    .filter(user => 
+                        user !== currentUser && 
+                        !friends.some(f => f.friend === user)
+                    );
+
+                const dialog = document.createElement('div');
+                dialog.className = 'friend-request-dialog';
+                
+                dialog.innerHTML = `
+                    <h3>添加好友</h3>
+                    <select id="friendUsername" style="width: 100%; padding: 8px; margin-bottom: 16px; border: 1px solid #ddd; border-radius: 4px;">
+                        <option value="">请选择用户</option>
+                        ${availableUsers.map(user => `<option value="${user}">${user}</option>`).join('')}
+                    </select>
+                    <div class="buttons">
+                        <button class="send" onclick="addFriend()">发送请求</button>
+                        <button class="cancel" onclick="closeAddFriendDialog()">取消</button>
+                    </div>
+                    ${pendingFriendRequests.length > 0 ? `
+                        <div class="friend-requests-list">
+                            <h4 style="margin: 12px 0;">待处理的好友请求</h4>
+                            ${pendingFriendRequests.map(username => `
+                                <div class="friend-request-item">
+                                    <div class="user-info">
+                                        <div class="user-avatar">${username.charAt(0).toUpperCase()}</div>
+                                        <span>${username}</span>
+                                    </div>
+                                    <div class="actions">
+                                        <button class="accept" onclick="respondToFriendRequest('${username}', true)">接受</button>
+                                        <button class="reject" onclick="respondToFriendRequest('${username}', false)">拒绝</button>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    ` : ''}
+                `;
+                document.body.appendChild(dialog);
+                dialog.style.display = 'block';
+            } catch (error) {
+                console.error('获取用户列表错误:', error);
+                alert('获取用户列表失败，请重试');
+            }
+        }
+
+        // 修改respondToFriendRequest函数
+        async function respondToFriendRequest(from, accept) {
+            try {
+                console.log('处理好友请求:', { from, accept });  // 添加日志
+                const response = await fetch(`http://${window.location.hostname}:6655/friend-request/respond`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        from: from,
+                        to: currentUser,
+                        accept: accept
+                    }),
+                });
+
+                const data = await response.json();
+                console.log('处理好友请求响应:', data);  // 添加日志
+
+                if (response.ok) {
+                    // 从待处理列表中移除
+                    pendingFriendRequests = pendingFriendRequests.filter(username => username !== from);
+                    updateFriendRequestCount();
+                    
+                    // 如果接受了请求，立即刷新好友列表
+                    if (accept) {
+                        console.log('接受好友请求，正在刷新好友列表...');
+                        await loadFriends();
+                        alert('已接受好友请求');
+                    } else {
+                        alert('已拒绝好友请求');
+                    }
+                    
+                    // 关闭并重新打开对话框以更新显示
+                    closeAddFriendDialog();
+                    showAddFriendDialog();
+                } else {
+                    throw new Error(data.error || '处理好友请求失败');
+                }
+            } catch (error) {
+                console.error('处理好友请求错误:', error);
+                alert(error.message || '处理好友请求失败，请重试');
+            }
+        }
+
+        // 关闭添加好友对话框
+        function closeAddFriendDialog() {
+            const dialog = document.querySelector('.friend-request-dialog');
+            if (dialog) {
+                dialog.remove();
+            }
+        }
+
+        // 添加好友
+        async function addFriend() {
+            const select = document.getElementById('friendUsername');
+            const username = select.value;
+            
+            if (!username) {
+                alert('请选择用户');
+                return;
+            }
+
+            try {
+                const response = await fetch(`http://${window.location.hostname}:6655/friend-request`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        from: currentUser,
+                        to: username,
+                        type: 'friend_request'
+                    }),
+                });
+
+                const data = await response.json();
+                console.log('好友请求响应:', data);
+
+                if (response.ok) {
+                    alert('好友请求已发送');
+                    document.getElementById('usersDropdown').style.display = 'none';
+                } else {
+                    if (data.error === 'already_friends') {
+                        alert('该用户已经是你的好友');
+                        // 修复好友关系并刷新好友列表
+                        await repairFriendships();
+                        await loadFriends();
+                    } else if (data.error === 'pending_request') {
+                        alert('已经有待处理的好友请求');
+                        if (!pendingFriendRequests.includes(username)) {
+                            pendingFriendRequests.push(username);
+                            updateFriendRequestCount();
+                        }
+                    } else {
+                        throw new Error(data.error || '发送好友请求失败');
+                    }
+                }
+            } catch (error) {
+                console.error('发送好友请求错误:', error);
+                alert(error.message || '发送好友请求失败，请重试');
+            }
+        }
+
+        // 显示个人资料编辑对话框
+        async function showProfileDialog() {
+            // 检查是否是管理员
+            try {
+                const response = await fetch(`http://${window.location.hostname}:6655/admin/users?username=${currentUser}`);
+                if (response.status === 403) {
+                    alert('只有管理员可以修改系统信息');
+                    return;
+                }
+
+                const dialog = document.createElement('div');
+                dialog.className = 'friend-request-dialog';
+                dialog.innerHTML = `
+                    <h3>修改系统信息</h3>
+                    <div style="margin-bottom: 16px;">
+                        <label style="display: block; margin-bottom: 8px;">上传系统图标</label>
+                        <div class="icon-preview" style="width: 64px; height: 64px; border-radius: 50%; background: #f5f5f5; margin-bottom: 8px; overflow: hidden; display: flex; align-items: center; justify-content: center;">
+                            <img id="iconPreview" src="" style="width: 100%; height: 100%; object-fit: cover; display: none;">
+                            <i class="fas fa-image" style="color: #666; font-size: 24px;"></i>
+                        </div>
+                        <input type="file" id="iconUpload" accept="image/*" style="display: none;" onchange="previewIcon(event)">
+                        <button onclick="document.getElementById('iconUpload').click()" style="width: 100%; padding: 8px; background: #f5f5f5; border: 1px solid #ddd; border-radius: 4px; cursor: pointer;">
+                            <i class="fas fa-upload"></i> 选择图片
+                        </button>
+                        <input type="hidden" id="newProfileIcon" value="">
+                    </div>
+                    <input type="text" id="newProfileName" placeholder="系统名称">
+                    <div class="member-list" style="margin: 16px 0;">
+                        <h4 style="margin: 0 0 8px 0;">已注册用户</h4>
+                        <div id="userList" style="max-height: 200px; overflow-y: auto;"></div>
+                    </div>
+                    <div class="buttons">
+                        <button class="send" onclick="updateProfile()">保存</button>
+                        <button class="cancel" onclick="closeProfileDialog()">取消</button>
+                    </div>
+                `;
+                document.body.appendChild(dialog);
+                dialog.style.display = 'block';
+
+                // 获取当前系统信息
+                const systemInfoResponse = await fetch(`http://${window.location.hostname}:6655/system-info`);
+                const systemInfo = await systemInfoResponse.json();
+                document.getElementById('newProfileName').value = systemInfo.name;
+                // 设置当前选中的图标
+                const currentIcon = document.querySelector(`.icon-selector i[data-icon="${systemInfo.icon}"]`);
+                if (currentIcon) {
+                    currentIcon.style.backgroundColor = '#e3f2fd';
+                    document.getElementById('newProfileIcon').value = systemInfo.icon;
+                }
+
+                // 获取并显示用户列表
+                const users = await response.json();
+                const userListHtml = users.map(user => `
+                    <div class="user-item" style="padding: 8px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee;">
+                        <div>
+                            <span style="font-weight: ${user.is_admin ? 'bold' : 'normal'}">
+                                ${user.username}
+                                ${user.is_admin ? ' (管理员)' : ''}
+                            </span>
+                        </div>
+                        ${!user.is_admin ? `
+                            <button class="cancel" style="padding: 4px 8px;" onclick="deleteUser('${user.username}')">
+                                删除
+                            </button>
+                        ` : ''}
+                    </div>
+                `).join('');
+                document.getElementById('userList').innerHTML = userListHtml;
+            } catch (error) {
+                console.error('获取用户列表错误:', error);
+                alert('获取用户列表失败');
+            }
+        }
+
+        // 删除用户
+        async function deleteUser(username) {
+            if (!confirm(`确定要删除用户 ${username} 吗？`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(
+                    `http://${window.location.hostname}:6655/admin/users/${username}?username=${currentUser}`,
+                    { method: 'DELETE' }
+                );
+
+                if (response.ok) {
+                    alert('用户删除成功');
+                    showProfileDialog(); // 刷新对话框
+                } else {
+                    const data = await response.json();
+                    alert(data.error || '删除用户失败');
+                }
+            } catch (error) {
+                console.error('删除用户错误:', error);
+                alert('删除用户失败');
+            }
+        }
+
+        // 关闭个人资料编辑对话框
+        function closeProfileDialog() {
+            const dialog = document.querySelector('.friend-request-dialog');
+            if (dialog) {
+                dialog.remove();
+            }
+        }
+
+        // 预览选择的图标
+        async function previewIcon(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            // 检查文件大小（限制为2MB）
+            if (file.size > 2 * 1024 * 1024) {
+                alert('图片大小不能超过2MB');
+                return;
+            }
+
+            // 检查文件类型
+            if (!file.type.startsWith('image/')) {
+                alert('请选择图片文件');
+                return;
+            }
+
+            try {
+                // 上传图片
+                const formData = new FormData();
+                formData.append('file', file);
+
+                const response = await fetch(`http://${window.location.hostname}:6655/upload`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    // 显示预览
+                    const preview = document.getElementById('iconPreview');
+                    preview.src = data.url;
+                    preview.style.display = 'block';
+                    preview.parentElement.querySelector('i').style.display = 'none';
+                    // 保存图片URL
+                    document.getElementById('newProfileIcon').value = data.url;
+                } else {
+                    alert('图片上传失败，请重试');
+                }
+            } catch (error) {
+                console.error('图片上传错误:', error);
+                alert('图片上传失败，请重试');
+            }
+        }
+
+        // 更新系统信息
+        async function updateProfile() {
+            const iconUrl = document.getElementById('newProfileIcon').value.trim();
+            const newName = document.getElementById('newProfileName').value.trim();
+
+            if (!iconUrl || !newName) {
+                alert('图标和名称不能为空');
+                return;
+            }
+
+            try {
+                const response = await fetch(`http://${window.location.hostname}:6655/admin/system-info`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        username: currentUser,
+                        icon: iconUrl,
+                        name: newName
+                    }),
+                });
+
+                if (response.ok) {
+                    // 更新显示
+                    const iconElement = document.getElementById('profileIcon');
+                    iconElement.innerHTML = `<img src="${iconUrl}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">`;
+                    document.getElementById('profileName').textContent = newName;
+                    closeProfileDialog();
+                    alert('系统信息更新成功');
+                } else {
+                    const data = await response.json();
+                    alert(data.error || '更新系统信息失败');
+                }
+            } catch (error) {
+                console.error('更新系统信息错误:', error);
+                alert('更新系统信息失败');
+            }
+        }
+
+        // 在页面加载时获取系统信息
+        async function loadSystemInfo() {
+            try {
+                const response = await fetch(`http://${window.location.hostname}:6655/system-info`);
+                const systemInfo = await response.json();
+                const iconElement = document.getElementById('profileIcon');
+                if (systemInfo.icon.startsWith('http')) {
+                    // 如果是图片URL
+                    iconElement.innerHTML = `<img src="${systemInfo.icon}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">`;
+                } else {
+                    // 如果是Font Awesome图标
+                    iconElement.innerHTML = `<i class="fas ${systemInfo.icon}"></i>`;
+                }
+                document.getElementById('profileName').textContent = systemInfo.name;
+            } catch (error) {
+                console.error('获取系统信息错误:', error);
+            }
+        }
+
+        // 加载好友列表
+        async function loadFriends() {
+            try {
+                console.log('正在加载好友列表...');
+                const response = await fetch(`http://${window.location.hostname}:6655/friends/${currentUser}`);
+                console.log('好友列表响应状态:', response.status);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('获取到的好友列表:', data);
+                    
+                    // 如果好友列表为空，尝试修复好友关系
+                    if (data.length === 0) {
+                        console.log('好友列表为空，尝试修复好友关系...');
+                        await repairFriendships();
+                        // 重新加载好友列表
+                        const retryResponse = await fetch(`http://${window.location.hostname}:6655/friends/${currentUser}`);
+                        if (retryResponse.ok) {
+                            const retryData = await retryResponse.json();
+                            console.log('修复后的好友列表:', retryData);
+                            friends = retryData;
+                        }
+                    } else {
+                        friends = data;
+                    }
+                    updateNavLinks();
+                } else {
+                    const errorData = await response.json();
+                    console.error('加载好友列表失败:', errorData);
+                }
+            } catch (error) {
+                console.error('加载好友列表错误:', error);
+            }
+        }
+
+        // 添加修复好友关系的函数
+        async function repairFriendships() {
+            try {
+                const response = await fetch(`http://${window.location.hostname}:6655/repair-friendships/${currentUser}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ username: currentUser })
+                });
+
+                if (response.ok) {
+                    console.log('好友关系修复成功');
+                } else {
+                    console.error('好友关系修复失败');
+                }
+            } catch (error) {
+                console.error('修复好友关系错误:', error);
+            }
+        }
+
+        // 修改发送好友请求函数
+        async function sendFriendRequest(username) {
+            try {
+                // 检查是否已经是好友
+                if (friends.some(f => f.friend === username)) {
+                    alert('该用户已经是你的好友');
+                    // 确保对方的好友列表也是最新的
+                    await repairFriendships();
+                    return;
+                }
+
+                // 检查是否已经发送过请求
+                if (pendingFriendRequests.includes(username)) {
+                    alert('已经向该用户发送过好友请求');
+                    return;
+                }
+
+                const response = await fetch(`http://${window.location.hostname}:6655/friend-request`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        from: currentUser,
+                        to: username,
+                        type: 'friend_request'
+                    }),
+                });
+
+                const data = await response.json();
+                console.log('好友请求响应:', data);
+
+                if (response.ok) {
+                    alert('好友请求已发送');
+                    document.getElementById('usersDropdown').style.display = 'none';
+                } else {
+                    if (data.error === 'already_friends') {
+                        alert('该用户已经是你的好友');
+                        // 修复好友关系并刷新好友列表
+                        await repairFriendships();
+                        await loadFriends();
+                    } else if (data.error === 'pending_request') {
+                        alert('已经有待处理的好友请求');
+                        if (!pendingFriendRequests.includes(username)) {
+                            pendingFriendRequests.push(username);
+                            updateFriendRequestCount();
+                        }
+                    } else {
+                        throw new Error(data.error || '发送好友请求失败');
+                    }
+                }
+            } catch (error) {
+                console.error('发送好友请求错误:', error);
+                alert(error.message || '发送好友请求失败，请重试');
+            }
+        }
+
+        // 加载群组列表
+        async function loadGroups() {
+            try {
+                const response = await fetch(`http://${window.location.hostname}:6655/groups/${currentUser}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    groups = data;
+                    updateNavLinks();
+                }
+            } catch (error) {
+                console.error('加载群组列表错误:', error);
+            }
+        }
+
+        // 更新导航链接
+        function updateNavLinks() {
+            const navList = document.querySelector('.nav-links ul');
+            navList.innerHTML = `
+                <li class="${!currentChat ? 'selected' : ''}" onclick="switchChat(null)">
+                    <i class="fas fa-home"></i>
+                    大家庭
+                    ${unreadCounts.public > 0 ? `<span class="unread-badge">${unreadCounts.public}</span>` : ''}
+                </li>
+                <li onclick="showCreateGroupDialog()">
+                    <i class="fas fa-plus"></i>
+                    创建群组
+                </li>
+            `;
+
+            // 添加好友列表
+            if (friends.length > 0) {
+                friends.forEach(friend => {
+                    const li = document.createElement('li');
+                    li.className = `friend-item${currentChat?.type === 'friend' && currentChat.id === friend.friend ? ' selected' : ''}`;
+                    li.onclick = () => switchChat('friend', friend.friend);
+                    li.innerHTML = `
+                        ${friend.friend}
+                        ${unreadCounts.friends[friend.friend] > 0 ? 
+                            `<span class="unread-badge">${unreadCounts.friends[friend.friend]}</span>` : 
+                            ''}
+                    `;
+                    navList.appendChild(li);
+                });
+            }
+
+            // 添加群组列表
+            if (groups.length > 0) {
+                groups.forEach(group => {
+                    const li = document.createElement('li');
+                    li.className = `group-item${currentChat?.type === 'group' && currentChat.id === group.id ? ' selected' : ''}`;
+                    li.setAttribute('data-group-id', group.id);
+                    li.onclick = () => switchChat('group', group.id, group.name);
+                    li.innerHTML = `
+                        ${group.name}
+                        ${unreadCounts.groups[group.id] > 0 ? 
+                            `<span class="unread-badge">${unreadCounts.groups[group.id]}</span>` : 
+                            ''}
+                    `;
+                    navList.appendChild(li);
+                });
+            }
+        }
+
+        // 切换聊天
+        function switchChat(type, id, name) {
+            currentChat = type ? { type, id, name } : null;
+            
+            // 清除未读消息计数
+            if (!type) {
+                unreadCounts.public = 0;
+            } else if (type === 'friend') {
+                unreadCounts.friends[id] = 0;
+            } else if (type === 'group') {
+                unreadCounts.groups[id] = 0;
+            }
+            
+            updateNavLinks();
+            
+            const header = document.querySelector('.header');
+            const input = document.getElementById('messageInput');
+            
+            if (!type) {
+                header.firstElementChild.textContent = '大家庭';
+                input.placeholder = '发送至 #大家庭';
+            } else if (type === 'friend') {
+                header.firstElementChild.textContent = id;
+                input.placeholder = `发送给 @${id}`;
+            } else if (type === 'group') {
+                header.firstElementChild.textContent = name;
+                input.placeholder = `发送至 #${name}`;
+            }
+            
+            loadMessages();
+        }
+
+        // 加载消息
+        function loadMessages() {
+            const container = document.getElementById('messageContainer');
+            container.innerHTML = '';
+            
+            // 重新请求历史消息
+            ws.send(JSON.stringify({
+                type: 'auth',
+                username: currentUser,
+                currentChat: currentChat // 添加当前聊天信息
+            }));
+        }
+
+        // 按回车发送消息
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
+        // 切换在线用户下拉菜单
+        function toggleUsersDropdown() {
+            const dropdown = document.getElementById('usersDropdown');
+            if (dropdown.style.display === 'block') {
+                dropdown.style.display = 'none';
+            } else {
+                dropdown.style.display = 'block';
+            }
+        }
+
+        // 点击其他地方关闭下拉菜单
+        document.addEventListener('click', (event) => {
+            const dropdown = document.getElementById('usersDropdown');
+            const onlineUsers = document.querySelector('.online-users');
+            if (!onlineUsers.contains(event.target)) {
+                dropdown.style.display = 'none';
+            }
+        });
+
+        // 切换表情选择器显示/隐藏
+        function toggleEmojiPicker() {
+            const picker = document.getElementById('emojiPicker');
+            picker.style.display = picker.style.display === 'grid' ? 'none' : 'grid';
+        }
+
+        // 添加表情到输入框
+        function addEmoji(emoji) {
+            const input = document.getElementById('messageInput');
+            input.value += emoji;
+            toggleEmojiPicker();
+            input.focus();
+        }
+
+        // 点击其他地方关闭表情选择器
+        document.addEventListener('click', (event) => {
+            const picker = document.getElementById('emojiPicker');
+            const emojiButton = document.querySelector('.emoji');
+            if (!picker.contains(event.target) && !emojiButton.contains(event.target)) {
+                picker.style.display = 'none';
+            }
+        });
+
+        // 修改页面加载事件
+        window.addEventListener('load', () => {
+            loadSystemInfo();
+            checkLoginStatus();
+        });
+
+        // 添加showCreateGroupDialog函数
+        function showCreateGroupDialog() {
+            const dialog = document.createElement('div');
+            dialog.className = 'create-group-dialog';
+            dialog.innerHTML = `
+                <h3>创建群组</h3>
+                <input type="text" id="groupName" placeholder="群组名称">
+                <div class="member-list">
+                    ${friends.map(friend => `
+                        <div class="member-item">
+                            <span>${friend.friend}</span>
+                            <input type="checkbox" value="${friend.friend}">
+                        </div>
+                    `).join('')}
+                </div>
+                <div class="buttons">
+                    <button class="create" onclick="createGroup()">创建</button>
+                    <button class="cancel" onclick="closeCreateGroupDialog()">取消</button>
+                </div>
+            `;
+            document.body.appendChild(dialog);
+            dialog.style.display = 'block';
+        }
+
+        // 关闭创建群组对话框
+        function closeCreateGroupDialog() {
+            const dialog = document.querySelector('.create-group-dialog');
+            if (dialog) {
+                dialog.remove();
+            }
+        }
+
+        // 创建群组
+        async function createGroup() {
+            const groupName = document.getElementById('groupName').value.trim();
+            if (!groupName) {
+                alert('请输入群组名称');
+                return;
+            }
+
+            // 获取选中的成员
+            const selectedMembers = Array.from(document.querySelectorAll('.member-item input[type="checkbox"]:checked'))
+                .map(checkbox => checkbox.value);
+
+            // 至少需要选择一个成员
+            if (selectedMembers.length === 0) {
+                alert('请至少选择一个群组成员');
+                return;
+            }
+
+            try {
+                const response = await fetch(`http://${window.location.hostname}:6655/groups`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        name: groupName,
+                        creator: currentUser,
+                        members: [...selectedMembers, currentUser] // 确保包含创建者自己
+                    }),
+                });
+
+                if (response.ok) {
+                    alert('群组创建成功');
+                    closeCreateGroupDialog();
+                    loadGroups(); // 重新加载群组列表
+                } else {
+                    const data = await response.json();
+                    throw new Error(data.error || '创建群组失败');
+                }
+            } catch (error) {
+                console.error('创建群组错误:', error);
+                alert(error.message || '创建群组失败，请重试');
+            }
+        }
+    </script>
+</body>
+</html>
